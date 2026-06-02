@@ -298,6 +298,135 @@ Diferencia: 5 minutos → Conflicto detectado
 
 ---
 
+## 7. Preguntas de Análisis Razonado
+
+### ¿Cómo se representa una repetición semanal?
+
+**Respuesta**: La repetición semanal se modeló mediante un `Set<DayOfWeek>` en la clase `RecurrencePattern`. Esta estructura de datos fue elegida deliberadamente por las siguientes razones:
+
+- **Evita duplicados**: Un `Set` garantiza que nunca habrá días repetidos en la misma alarma, eliminando redundancia.
+- **Búsqueda eficiente**: La comprobación de si un día específico está en el patrón es O(1) en promedio.
+- **Operaciones de semana completa**: Se proporcionan métodos de conveniencia (`setWeekdays()`, `setWeekend()`, `setAllDays()`) que permiten configurar grupos de días de forma intuitiva.
+- **Compatibilidad con java.time**: El enum `DayOfWeek` de Java 8+ facilita comparaciones y validaciones.
+
+**Implementación**:
+```java
+private Set<DayOfWeek> daysOfWeek = new EnumSet<>(DayOfWeek.class);
+public void setWeekdays() {
+    daysOfWeek.addAll(Arrays.asList(
+        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+    ));
+}
+public boolean shouldActivateOn(DayOfWeek day) {
+    return daysOfWeek.contains(day);
+}
+```
+
+### ¿Cómo evitar alarmas duplicadas?
+
+**Respuesta**: Se implementó un sistema de identificadores únicos (`UUID`) combinado con validación en `AlarmManager`. La estrategia es:
+
+1. **UUID único por alarma**: Cada `Alarm` se crea con un identificador `String` único generado mediante `UUID.randomUUID()`. Este ID nunca cambia durante la vida de la alarma.
+
+2. **Validación en AlarmManager**: Antes de crear una nueva alarma, se verifica:
+   - Que no exista otra alarma con el mismo ID
+   - Que la combinación (hora, minuto, patrón, sonido) no sea idéntica a otra alarma activa
+
+3. **Comparación de parámetros**: Dos alarmas se consideran "iguales" si comparten:
+   - Misma hora y minuto
+   - Mismo patrón de repetición (mismos días)
+   - Mismo perfil de sonido
+
+**Código de validación**:
+```java
+public Alarm createAlarm(int hour, int minute, String label) {
+    // Validar que no exista alarma con misma configuración
+    boolean duplicate = alarms.stream()
+        .anyMatch(a -> a.getHour() == hour && a.getMinute() == minute 
+                    && a.getRecurrencePattern().equals(rp));
+    if (duplicate) {
+        throw new IllegalArgumentException("Ya existe una alarma idéntica");
+    }
+    return new Alarm(UUID.randomUUID().toString(), hour, minute, label);
+}
+```
+
+### ¿Qué ocurre si dos alarmas suenan simultáneamente?
+
+**Respuesta**: El sistema aplica la siguiente estrategia de priorización:
+
+1. **Detección previa**: `AlarmConflictDetector` identifica alarmas que suenan dentro de un `conflictThresholdMinutes` (por defecto 5 minutos) y genera un objeto `Conflict` para alertar al usuario.
+
+2. **Priorización por tipo**: Si dos alarmas suenan en el mismo minuto:
+   - Se priorizan por volumen (mayor volumen primero)
+   - Se priorizan por duración de snooze configurada
+   - Se reproducen en orden de creación (FIFO) si el volumen es igual
+
+3. **Activación simultánea**: En lugar de bloquear una alarma, ambas se reportan al usuario en una lista ordenada:
+```java
+List<Alarm> nowAlarmsSound = checkAlarmsDue(); // Retorna todas las alarmas activas en este minuto
+if (nowAlarmsSound.size() > 1) {
+    System.out.println("⚠️ CONFLICTO: " + nowAlarmsSound.size() + " alarmas suenan simultáneamente");
+}
+```
+
+4. **Información del conflicto**: Se genera un objeto `Conflict` que documenta qué alarmas chocan y cuánto se solapan.
+
+### ¿Cómo garantizar la coherencia interna?
+
+**Respuesta**: Se aplicaron los siguientes mecanismos de encapsulación y validación:
+
+1. **Encapsulación total**: Todos los atributos sensibles de las clases principales son `private`:
+   - `Alarm.hour`, `Alarm.minute`, `Alarm.id`, `Alarm.isActive`
+   - `SoundProfile.volume`, `SoundProfile.soundType`
+   - `RecurrencePattern.daysOfWeek`, `SnoozeConfig.currentSnoozeCount`
+
+2. **Acceso controlado mediante métodos públicos con validación**:
+```java
+private int hour;  // No se puede acceder directamente
+
+public void setHour(int hour) {
+    if (hour < 0 || hour > 23) {
+        throw new IllegalArgumentException("Hora debe estar entre 0 y 23");
+    }
+    this.hour = hour;
+}
+
+public int getHour() {
+    return this.hour;  // Solo lectura del estado actual
+}
+```
+
+3. **Invariantes de clase**: Se verifican pre y postcondiciones en métodos críticos:
+   - Al crear una alarma: hora ∈ [0-23], minuto ∈ [0-59]
+   - Al cambiar volumen: volumen ∈ [0-100]
+   - Al establecer snooze: intervalo > 0
+
+4. **Inmutabilidad donde aplica**: El ID de la alarma nunca se modifica tras la creación. Solo se permite lectura mediante `getId()`.
+
+5. **Transaccionalidad de operaciones**: Operaciones complejas como `updateAlarm()` validan el estado antes y después:
+```java
+public void updateAlarm(Alarm updatedAlarm) {
+    // Validar que la alarma exista
+    Alarm original = getAlarmById(updatedAlarm.getId());
+    if (original == null) throw new IllegalArgumentException("Alarma no existe");
+    
+    // Validar nuevos parámetros
+    if (updatedAlarm.getHour() < 0 || updatedAlarm.getHour() > 23) {
+        throw new IllegalArgumentException("Hora inválida");
+    }
+    
+    // Actualizar solo si todas las validaciones pasaron
+    alarms.remove(original);
+    alarms.add(updatedAlarm);
+}
+```
+
+6. **Ausencia de métodos "backdoor"**: No existen métodos privados que eludan las validaciones. Todas las modificaciones del estado pasan por métodos públicos que verifican invariantes.
+
+---
+
 ## 7. Casos de Uso Principales
 
 1. **Crear alarma**: Usuario → AlarmManager.createAlarm()

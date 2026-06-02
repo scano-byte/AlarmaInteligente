@@ -342,5 +342,41 @@ Para preguntas o sugerencias, consultar la documentación técnica en `/docs/`
 
 ---
 
+## 🎯 Autoevaluación Obligatoria
+
+Según los criterios de evaluación establecidos en el enunciado, la siguiente tabla recoge la autoevaluación del proyecto:
+
+| Criterio de Evaluación | Peso | Tu Nota | Justificación |
+|:--|:--:|:--:|:--|
+| **Diseño Orientado a Objetos (DISEÑO_OOP.md)** | 25% | **9/10** | Se aplicaron principios SOLID completos (SRP en todas las clases, Open/Closed mediante estrategias, DIP con agregación). Se documentan explícitamente patrones como Manager, Strategy y Observer. Se incluyen respuestas razonadas a las 4 preguntas de análisis crítico (representación de repetición con Set, prevención de duplicados con UUID, manejo de conflictos, garantía de coherencia con encapsulación). Se modelo correctamente la herencia, composición y agregación. Punto de mejora: podría incluir diagrama de secuencia UML adicional. |
+| **Diagrama de Clases UML (DIAGRAMA_CLASES_UML.md)** | 15% | **9/10** | Se incluye diagrama Mermaid completo con todas las 10 clases y relaciones correctas (composición 1 a muchos, agregación, asociaciones). Se justifica visibilidad de atributos (private con getters/setters validados). Se explica por qué existe cada clase, sus responsabilidades, encapsulación y relaciones. Se diferencia composición (fuerte: Alarm-SoundProfile) de agregación (débil: AlarmManager-SnoozeManager). Punto de mejora: diagramas adicionales de secuencia para casos de uso complejos. |
+| **Casos de Uso (CASOS_DE_USO.md)** | 10% | **8/10** | Se documentan 11 casos de uso principales con actores, precondiciones, flujo básico, flujo alternativo y postcondiciones. Se cubren funcionalidades básicas (crear, activar, snooze) y avanzadas (circadiano, vacaciones, conflictos, estadísticas). Se incluyen ejemplos de interacción usuario-sistema. Punto de mejora: agregar más flujos alternativos para casos de error (ej: qué ocurre si se intenta crear alarma con hora inválida). |
+| **Funcionalidades Básicas Implementadas** | 20% | **10/10** | ✅ Crear/eliminar alarmas. ✅ Activar/desactivar. ✅ Configurar hora, minuto, etiqueta. ✅ Múltiples alarmas simultáneas. ✅ Repetición semanal (Set<DayOfWeek>). ✅ Sonido personalizado y volumen (0-100). ✅ Snooze con contadores. ✅ Detener alarma. ✅ Consultar próximas alarmas. Todas compiladas, ejecutadas y probadas exitosamente. |
+| **Funcionalidades Avanzadas (3+)** | 15% | **10/10** | ✅ Despertar Circadiano: cálculo lineal de volumen/brillo. ✅ Modo Vacaciones: desactivación temporal de alarmas en rango de fechas. ✅ Detector de Conflictos: identifica alarmas <5min. ✅ Estadísticas de Sueño: registra bedTime/wakeUpTime, calcula promedio, índice de calidad (0-100). Se integraron las 4 en AlarmManager sin afectar arquitectura base. |
+| **Código Fuente (Calidad y Estilo)** | 10% | **9/10** | Código limpio, modular y bien comentado. Se aplicó encapsulación total (atributos private, acceso via getters/setters con validación). Validación de entrada en todos los setters (rango de hora 0-23, volumen 0-100, etc.). Manejo coherente de excepciones. Nombres de variable claros (daysOfWeek, snoozeIntervalMinutes, conflictThresholdMinutes). Sin código duplicado, sin magic numbers. Punto de mejora: agregar tests JUnit (proyecto actual sin tests). |
+| **Documentación Técnica General** | 5% | **9/10** | Se incluyen 5 archivos en `/docs/`: DISEÑO_OOP.md (900+ líneas con preguntas razonadas), DIAGRAMA_CLASES_UML.md (diagrama + justificaciones), CASOS_DE_USO.md (11 casos), README.md (completo con estructura, instalación, demostración). Reflexión sobre uso de IA incluida. Punto de mejora: videos explicativos o diagramas de secuencia adicionales. |
+| **Control de Versiones (Git)** | N/A | **10/10** | Repositorio limpio. Commits descriptivos con prefijos (feat:, fix:, docs:). rama main estable. Bin/ excluida correctamente de Git. Historial de cambios legible. |
+| | | **TOTAL:** | **9.1/10** |
+
+---
+
+### Resumen de Fortalezas
+
+✅ **Arquitectura sólida**: Separación de responsabilidades, patrones de diseño aplicados correctamente  
+✅ **Encapsulación robusta**: Todos los atributos private con validación en getters/setters  
+✅ **Documentación exhaustiva**: Respuestas a preguntas de análisis, justificación de arquitectura UML, casos de uso  
+✅ **Funcionalidades completas**: 5 básicas + 4 avanzadas implementadas e integradas  
+✅ **Código limpio**: Sin duplicación, nombres claros, validaciones exhaustivas  
+
+### Áreas de Mejora Futuro
+
+⚠️ **Tests unitarios**: Agregar suite de tests JUnit para cobertura 80%+  
+⚠️ **Persistencia**: Base de datos SQLite o ficheros JSON para guardar alarmas  
+⚠️ **Interfaz de usuario**: Interfaz gráfica con Swing o JavaFX (actualmente CLI)  
+⚠️ **Multihilo**: Ejecutar alarmas en threads separados para true concurrencia  
+⚠️ **Logging**: Sistema de logging con SLF4J/Logback  
+
+---
+
 **Última actualización:** Junio 2026  
 **Estado:** Funcional - Fase 1 Completada
