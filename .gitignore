@@ -1,0 +1,35 @@
+# Archivos compilados Java
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+
+# Directorios de compilación
+bin/
+build/
+target/
+out/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de sistema
+.classpath
+.project
+.settings/
+
+# Logs
+*.log
+
+# Tests
+.junit.xml
+
+# Generados por IA (no necesarios en repo)
+debug-logs/
+*.tmp
